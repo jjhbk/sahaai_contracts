@@ -100,7 +100,7 @@ function getContractDataFromDeployments() {
  * This script should be run last.
  */
 const generateTsAbis: DeployFunction = async function () {
-  const TARGET_DIR = "../nextjs/contracts/";
+  const TARGET_DIR = "./nextjs/contracts/";
   const allContractsData = getContractDataFromDeployments();
 
   const fileContent = Object.entries(allContractsData).reduce((content, [chainId, chainConfig]) => {
@@ -108,7 +108,7 @@ const generateTsAbis: DeployFunction = async function () {
   }, "");
 
   if (!fs.existsSync(TARGET_DIR)) {
-    fs.mkdirSync(TARGET_DIR);
+    fs.mkdirSync(TARGET_DIR, { recursive: true });
   }
   fs.writeFileSync(
     `${TARGET_DIR}deployedContracts.ts`,

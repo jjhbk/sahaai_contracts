@@ -1,7 +1,10 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { Contract } from "ethers";
+
 import fs from 'fs'
+import { ethers, parseUnits } from 'ethers';
+import path from "path";
 
 /**
  * Deploys a contract named "YourContract" using the deployer account and
@@ -22,7 +25,18 @@ const deployYourContract: DeployFunction = async function (hre: HardhatRuntimeEn
   */
   const { deployer } = await hre.getNamedAccounts();
   const { deploy } = hre.deployments;
-  let DeployedContracts: any;
+  type deployedContracts = {
+    AccessManager: string,
+    SignatureManager: string,
+    TokenManager: string,
+    SubscriptionManager: string,
+    SahaaiManager: string
+  }
+  let DeployedContracts: deployedContracts = {
+    AccessManager: "0x0000000000000000000000000000000000000000", SignatureManager: "0x0000000000000000000000000000000000000000",
+    SubscriptionManager: "0x0000000000000000000000000000000000000000", TokenManager: "0x0000000000000000000000000000000000000000",
+    SahaaiManager: "0x0000000000000000000000000000000000000000"
+  }
   //Deploy the accessManager
   const accessRes = await deploy("AccessManager", {
     from: deployer,
@@ -50,7 +64,7 @@ const deployYourContract: DeployFunction = async function (hre: HardhatRuntimeEn
 
   const subRes = await deploy("SubscriptionManager", {
     from: deployer,
-    args: ["0.001", "0.005", "0.008"],
+    args: [parseUnits("0.001"), parseUnits("0.005"), parseUnits("0.008"), BigInt(2600000)],
     log: true,
     // autoMine: can be passed to the deploy function to make the deployment process faster on local networks by
     // automatically mining the contract deployment transaction. There is no effect on live networks.
@@ -69,7 +83,6 @@ const deployYourContract: DeployFunction = async function (hre: HardhatRuntimeEn
   })
   console.log("Token Manager Deployed at Address:", tokenRes.address)
   DeployedContracts.TokenManager = tokenRes.address;
-
   const sahaaiRes = await deploy("SahaaiManager", {
     from: deployer,
     args: ["sahaai", "S", DeployedContracts.SubscriptionManager, DeployedContracts.SignatureManager, DeployedContracts.TokenManager, DeployedContracts.AccessManager],
@@ -80,8 +93,9 @@ const deployYourContract: DeployFunction = async function (hre: HardhatRuntimeEn
   })
   console.log("Sahaai Manager Deployed at Address:", sahaaiRes.address)
   DeployedContracts.SahaaiManager = sahaaiRes.address;
-
-  fs.writeFileSync(`../deployments/${hre.network.name}/deployments.json`, JSON.stringify(DeployedContracts), 'utf8')
+  const filePath = path.join(`./deployments/${hre.network.name}`
+    , "deployments.json");
+  fs.writeFileSync(filePath, JSON.stringify(DeployedContracts), 'utf8')
 };
 
 export default deployYourContract;
