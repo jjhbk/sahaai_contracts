@@ -121,7 +121,14 @@ contract TokenManager is Ownable, ReentrancyGuard {
 
         tokenBalances[user][token] -= amount;
         tokenBalances[feeRecipient][token] += fee;
-        IERC20(token).safeTransfer(msg.sender, netAmount);
+        uint256 allowance = IERC20(token).allowance(msg.sender, address(this));
+        if (allowance < amount) {
+            require(
+                IERC20(token).approve(address(this), amount),
+                "Approval for token transfer failed"
+            );
+        }
+        IERC20(token).safeTransfer(user, netAmount);
         emit WithdrawToken(user, token, amount);
     }
 
