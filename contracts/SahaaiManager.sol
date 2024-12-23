@@ -11,7 +11,7 @@ import "./ISignatureManager.sol";
 import "./ITokenManager.sol";
 import "./IAccessManager.sol";
 
-contract AIAgentWalletWithSubscriptions is ERC721, Ownable, ReentrancyGuard {
+contract Sahaai is ERC721, Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     ISubscriptionManager public subscriptionManager;
