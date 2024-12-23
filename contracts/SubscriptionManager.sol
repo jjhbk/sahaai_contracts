@@ -57,14 +57,14 @@ contract SubscriptionManager is Ownable {
     modifier isSubscribed(address user) {
         require(
             activeSubscriptions[user].expiry > block.timestamp,
-            "Subscription expired or not active"
+            "Err:sub-expired/inactive"
         );
         _;
     }
 
     function subscribe(Plan _plan) external payable {
         uint256 price = getPlanPrice(_plan);
-        require(msg.value == price, "Incorrect subscription fee");
+        require(msg.value == price, "Err:Sub-fee");
 
         uint256 newExpiry = block.timestamp + subscriptionDuration;
 
@@ -73,7 +73,7 @@ contract SubscriptionManager is Ownable {
         } else {
             require(
                 newExpiry > activeSubscriptions[msg.sender].expiry,
-                "Expiry overflow detected"
+                "Err:Expiry overflow"
             );
         }
 
@@ -85,14 +85,11 @@ contract SubscriptionManager is Ownable {
         Plan _newPlan
     ) external payable isSubscribed(msg.sender) {
         Plan currentPlan = activeSubscriptions[msg.sender].planId;
-        require(_newPlan > currentPlan, "Can only upgrade to a higher plan");
+        require(_newPlan > currentPlan, "Err: upgrade-onlyHigh");
 
         uint256 additionalCost = getPlanPrice(_newPlan) -
             getPlanPrice(currentPlan);
-        require(
-            msg.value == additionalCost,
-            "Incorrect value sent for upgrade"
-        );
+        require(msg.value == additionalCost, "Err:Upgrade-incorrect value");
 
         activeSubscriptions[msg.sender].planId = _newPlan;
         emit PlanUpgraded(

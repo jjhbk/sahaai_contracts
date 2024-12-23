@@ -451,6 +451,50 @@ const deployedContracts = {
             {
               indexed: true,
               internalType: "address",
+              name: "user",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "string",
+              name: "identifier",
+              type: "string",
+            },
+          ],
+          name: "IdentifierRegistered",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "address",
+              name: "user",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "tokenId",
+              type: "uint256",
+            },
+            {
+              indexed: false,
+              internalType: "string",
+              name: "tokenURI",
+              type: "string",
+            },
+          ],
+          name: "NFTMinted",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "address",
               name: "previousOwner",
               type: "address",
             },
@@ -526,6 +570,25 @@ const deployedContracts = {
             {
               indexed: true,
               internalType: "address",
+              name: "token",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "string",
+              name: "identifier",
+              type: "string",
+            },
+          ],
+          name: "TokenIdentifierRegistered",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "address",
               name: "from",
               type: "address",
             },
@@ -551,12 +614,38 @@ const deployedContracts = {
         },
         {
           inputs: [],
+          name: "DepositETH",
+          outputs: [],
+          stateMutability: "payable",
+          type: "function",
+        },
+        {
+          inputs: [],
           name: "accessManager",
           outputs: [
             {
               internalType: "contract IAccessManager",
               name: "",
               type: "address",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+          ],
+          name: "addressesToIdentifiers",
+          outputs: [
+            {
+              internalType: "string",
+              name: "",
+              type: "string",
             },
           ],
           stateMutability: "view",
@@ -666,6 +755,44 @@ const deployedContracts = {
         {
           inputs: [
             {
+              internalType: "string",
+              name: "",
+              type: "string",
+            },
+          ],
+          name: "identifiersToAddresses",
+          outputs: [
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "",
+              type: "string",
+            },
+          ],
+          name: "identifiersToToken",
+          outputs: [
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
               internalType: "address",
               name: "owner",
               type: "address",
@@ -677,6 +804,44 @@ const deployedContracts = {
             },
           ],
           name: "isApprovedForAll",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "identifier",
+              type: "string",
+            },
+          ],
+          name: "isIdentifierAvailable",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "name",
+              type: "string",
+            },
+          ],
+          name: "isTokenIdentifierAvailable",
           outputs: [
             {
               internalType: "bool",
@@ -706,6 +871,11 @@ const deployedContracts = {
               internalType: "address",
               name: "recipient",
               type: "address",
+            },
+            {
+              internalType: "string",
+              name: "uri",
+              type: "string",
             },
           ],
           name: "mintNFT",
@@ -756,6 +926,37 @@ const deployedContracts = {
             },
           ],
           stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "identifier",
+              type: "string",
+            },
+          ],
+          name: "registerIdentifier",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "name",
+              type: "string",
+            },
+            {
+              internalType: "address",
+              name: "token",
+              type: "address",
+            },
+          ],
+          name: "registerTokenIdentifier",
+          outputs: [],
+          stateMutability: "nonpayable",
           type: "function",
         },
         {
@@ -848,57 +1049,6 @@ const deployedContracts = {
           type: "function",
         },
         {
-          inputs: [
-            {
-              internalType: "address",
-              name: "user",
-              type: "address",
-            },
-            {
-              internalType: "address",
-              name: "recipient",
-              type: "address",
-            },
-            {
-              internalType: "uint256",
-              name: "amount",
-              type: "uint256",
-            },
-          ],
-          name: "spendETH",
-          outputs: [],
-          stateMutability: "nonpayable",
-          type: "function",
-        },
-        {
-          inputs: [
-            {
-              internalType: "address",
-              name: "user",
-              type: "address",
-            },
-            {
-              internalType: "address",
-              name: "token",
-              type: "address",
-            },
-            {
-              internalType: "address",
-              name: "recipient",
-              type: "address",
-            },
-            {
-              internalType: "uint256",
-              name: "amount",
-              type: "uint256",
-            },
-          ],
-          name: "spendToken",
-          outputs: [],
-          stateMutability: "nonpayable",
-          type: "function",
-        },
-        {
           inputs: [],
           name: "subscriptionManager",
           outputs: [
@@ -944,6 +1094,25 @@ const deployedContracts = {
           type: "function",
         },
         {
+          inputs: [
+            {
+              internalType: "string",
+              name: "str",
+              type: "string",
+            },
+          ],
+          name: "toLower",
+          outputs: [
+            {
+              internalType: "string",
+              name: "",
+              type: "string",
+            },
+          ],
+          stateMutability: "pure",
+          type: "function",
+        },
+        {
           inputs: [],
           name: "tokenManager",
           outputs: [
@@ -959,12 +1128,50 @@ const deployedContracts = {
         {
           inputs: [
             {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+          ],
+          name: "tokenToIdentifiers",
+          outputs: [
+            {
+              internalType: "string",
+              name: "",
+              type: "string",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
               internalType: "uint256",
               name: "tokenId",
               type: "uint256",
             },
           ],
           name: "tokenURI",
+          outputs: [
+            {
+              internalType: "string",
+              name: "",
+              type: "string",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          name: "tokenURIs",
           outputs: [
             {
               internalType: "string",

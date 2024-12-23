@@ -38,7 +38,7 @@ contract TokenManager is Ownable, ReentrancyGuard {
         address newRecipient
     );
     modifier onlyAuthorizedSpender() {
-        require(msg.sender == authorizedSpender, "Not authorized to spend");
+        require(msg.sender == authorizedSpender, "Err:Unauthorized");
         _;
     }
 
@@ -46,16 +46,14 @@ contract TokenManager is Ownable, ReentrancyGuard {
         address _feeRecipient,
         address accessManagerAddress
     ) Ownable(msg.sender) ReentrancyGuard() {
-        require(
-            _feeRecipient != address(0),
-            "Fee recipient cannot be zero address"
-        );
+        require(_feeRecipient != address(0), "Err:invalid add");
         feeRecipient = _feeRecipient;
         accessManager = IAccessManager(accessManagerAddress);
+        authorizedSpender = msg.sender;
     }
 
     function authorizeSpender(address newSpender) external onlyOwner {
-        require(newSpender != address(0), "Invalid spender address");
+        require(newSpender != address(0), "Err:Invalid spender");
         authorizedSpender = newSpender;
         emit SpenderAuthorized(newSpender);
     }
@@ -70,17 +68,17 @@ contract TokenManager is Ownable, ReentrancyGuard {
         address token,
         uint256 amount
     ) external {
-        require(token != address(0), "Invalid token address");
+        require(token != address(0), "Err:Invalid token address");
         require(amount > 0, "Amount must be greater than zero");
 
         uint256 allowance = IERC20(token).allowance(user, address(this));
-        require(allowance >= amount, "Insufficient token allowance");
+        require(allowance >= amount, "Err:Insufficient token allowance");
 
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         if (tokenBalances[msg.sender][token] == 0) {
             require(
                 userTokenList[msg.sender].length < maxTokenListSize,
-                "Token list limit reached"
+                "Err:Token list limit"
             );
             userTokenList[msg.sender].push(token);
         }
@@ -98,7 +96,7 @@ contract TokenManager is Ownable, ReentrancyGuard {
         uint256 netAmount = amount - fee;
         require(user != address(0));
         require(recipient != address(0));
-        require(ethBalances[user] >= amount, "Insufficient ETH balance");
+        require(ethBalances[user] >= amount, "Err:withdraw eth");
         ethBalances[user] -= amount;
         payable(recipient).transfer(netAmount);
         ethBalances[feeRecipient] += fee;
@@ -118,7 +116,7 @@ contract TokenManager is Ownable, ReentrancyGuard {
         uint256 netAmount = amount - fee;
         require(
             tokenBalances[user][token] >= amount,
-            "Insufficient token balance"
+            "Err:withdraw token insufficient"
         );
 
         tokenBalances[user][token] -= amount;
@@ -139,8 +137,8 @@ contract TokenManager is Ownable, ReentrancyGuard {
             msg.sender == accessManager.owner(),
             "Only owner can update configuration"
         );
-        require(newFeePercent <= 100, "Fee percent cannot exceed 100");
-        require(newRecipient != address(0), "Invalid recipient address");
+        require(newFeePercent <= 100, "Err:Fee limit");
+        require(newRecipient != address(0), "Err:update invalid add");
 
         uint256 oldFeePercent = platformFeePercent;
         address oldRecipient = feeRecipient;

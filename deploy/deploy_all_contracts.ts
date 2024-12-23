@@ -1,11 +1,9 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { Contract } from "ethers";
-
 import fs from 'fs'
-import { ethers, parseUnits } from 'ethers';
+import { parseUnits } from 'ethers';
 import path from "path";
-
 /**
  * Deploys a contract named "YourContract" using the deployer account and
  * constructor arguments set to the deployer address
@@ -96,6 +94,12 @@ const deployYourContract: DeployFunction = async function (hre: HardhatRuntimeEn
   const filePath = path.join(`./deployments/${hre.network.name}`
     , "deployments.json");
   fs.writeFileSync(filePath, JSON.stringify(DeployedContracts), 'utf8')
+
+  const TokenManagerContract = await hre.ethers.getContractAt("TokenManager", deployer);
+  const result = await (await TokenManagerContract.authorizeSpender(DeployedContracts.SahaaiManager)).wait()
+  console.log("set the authorized spender ", result, DeployedContracts);
+
+
 };
 
 export default deployYourContract;

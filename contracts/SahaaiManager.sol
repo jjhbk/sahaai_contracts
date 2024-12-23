@@ -13,6 +13,11 @@ import "./IAccessManager.sol";
 
 contract SahaaiManager is ERC721, Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
+    mapping(uint256 => string) public tokenURIs;
+    mapping(string => address) public identifiersToAddresses;
+    mapping(address => string) public addressesToIdentifiers;
+    mapping(string => address) public identifiersToToken;
+    mapping(address => string) public tokenToIdentifiers;
 
     ISubscriptionManager public subscriptionManager;
     ISignatureManager public signatureManager;
@@ -36,6 +41,9 @@ contract SahaaiManager is ERC721, Ownable, ReentrancyGuard {
         uint256 amount
     );
     event FundsWithdrawn(address indexed owner, uint256 amount);
+    event NFTMinted(address indexed user, uint256 tokenId, string tokenURI);
+    event IdentifierRegistered(address indexed user, string identifier);
+    event TokenIdentifierRegistered(address indexed token, string identifier);
 
     mapping(address => uint256) private lastOperationTime;
     modifier onlyAIAgent() {
@@ -74,45 +82,24 @@ contract SahaaiManager is ERC721, Ownable, ReentrancyGuard {
     // ====== Wallet Functionality ======
 
     function mintNFT(
-        address recipient
+        address recipient,
+        string memory uri
     ) external payable onlyAIAgent nonReentrant {
         require(recipient != address(0), "Invalid recipient");
-        require(msg.value == mintFee, "Incorrect mint fee");
-        uint256 tokenId = nextTokenId++;
-        _mint(recipient, tokenId);
-        payable(address(this)).transfer(msg.value);
+        require(tokenManager.ethBalances(recipient) >= mintFee, "Err:Mint");
+        _mint(recipient, nextTokenId);
+        tokenURIs[nextTokenId] = uri;
+        emit NFTMinted(recipient, nextTokenId, uri);
+        nextTokenId++;
+        tokenManager.withdrawETH(recipient, accessManager.aiAgent(), mintFee);
     }
 
-    function spendETH(
-        address user,
-        address recipient,
-        uint256 amount
-    ) external onlyAIAgent whenNotPaused nonReentrant {
-        require(
-            tokenManager.ethBalances(user) >= amount,
-            "Insufficient ETH balance"
-        );
-        // Deduct total amount and transfer
-        tokenManager.withdrawETH(user, recipient, amount);
-
-        emit SpendETH(user, recipient, amount);
-    }
-
-    function spendToken(
-        address user,
-        address token,
-        address recipient,
-        uint256 amount
-    ) external onlyAIAgent whenNotPaused nonReentrant {
-        require(
-            tokenManager.tokenBalances(user, token) >= amount,
-            "Insufficient token balance"
-        );
-
-        // Deduct total amount and transfer
-        tokenManager.withdrawToken(user, recipient, token, amount);
-
-        emit SpendToken(user, token, recipient, amount);
+    //query tokenURI
+    function tokenURI(
+        uint256 tokenId
+    ) public view override returns (string memory) {
+        require(ownerOf(tokenId) != address(0), "Err:tokenURI");
+        return tokenURIs[tokenId];
     }
 
     function emergencyWithdraw() external whenNotPaused nonReentrant {
@@ -153,30 +140,76 @@ contract SahaaiManager is ERC721, Ownable, ReentrancyGuard {
         );
 
         if (token == address(0)) {
-            require(
-                tokenManager.ethBalances(user) >= amount,
-                "Insufficient ETH balance"
-            );
+            require(tokenManager.ethBalances(user) >= amount, "Err:exec-eth");
             tokenManager.withdrawETH(user, recipient, amount);
         } else {
             require(
                 tokenManager.tokenBalances(user, token) >= amount,
-                "Insufficient token balance"
+                "Err:exec-token"
             );
             tokenManager.withdrawToken(user, recipient, token, amount);
         }
     }
 
-    function withdrawFunds(uint256 amount) external onlyOwner {
+    // Register Identifier
+    function registerIdentifier(string memory identifier) external {
+        string memory _identifier = toLower(identifier);
+        require(isIdentifierAvailable(_identifier), "Err:Id in use");
+        identifiersToAddresses[toLower(_identifier)] = msg.sender;
+        addressesToIdentifiers[msg.sender] = _identifier;
+        emit IdentifierRegistered(msg.sender, _identifier);
+    }
+
+    // Check if Identifier is Available
+    function isIdentifierAvailable(
+        string memory identifier
+    ) public view returns (bool) {
+        return identifiersToAddresses[toLower(identifier)] == address(0);
+    }
+
+    function isTokenIdentifierAvailable(
+        string memory name
+    ) public view returns (bool) {
+        return identifiersToToken[toLower(name)] == address(0);
+    }
+
+    function registerTokenIdentifier(
+        string memory name,
+        address token
+    ) external onlyAIAgent {
+        string memory _name = toLower(name);
+        require(isTokenIdentifierAvailable(_name), "Err:Id unavail");
         require(
-            address(this).balance >= amount,
-            "Insufficient contract balance"
+            keccak256(abi.encodePacked(tokenToIdentifiers[token])) ==
+                keccak256(abi.encodePacked("")),
+            "Err:duplicate-id"
         );
+        tokenToIdentifiers[token] = _name;
+        identifiersToToken[_name] = token;
+        emit IdentifierRegistered(token, name);
+    }
+
+    //convert to lowercase
+
+    function toLower(string memory str) public pure returns (string memory) {
+        bytes memory bStr = bytes(str);
+        for (uint256 i = 0; i < bStr.length; i++) {
+            if (bStr[i] >= 0x41 && bStr[i] <= 0x5A) {
+                // Convert uppercase A-Z to lowercase a-z
+                bStr[i] = bytes1(uint8(bStr[i]) + 32);
+            }
+        }
+        return string(bStr);
+    }
+
+    // ====== Admin Functions ======
+    function withdrawFunds(uint256 amount) external onlyOwner {
+        require(address(this).balance >= amount, "Err:Contract-eth");
         payable(owner()).transfer(amount);
         emit FundsWithdrawn(owner(), amount);
     }
 
-    // ====== Admin Functions ======
+    function DepositETH() external payable {}
 
     receive() external payable whenNotPaused {
         tokenManager.depositETH{value: msg.value}();
