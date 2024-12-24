@@ -128,7 +128,7 @@ contract TokenManager is Ownable, ReentrancyGuard {
                 "Approval for token transfer failed"
             );
         }
-        IERC20(token).safeTransfer(user, netAmount);
+        IERC20(token).safeTransfer(recipient, netAmount);
         emit WithdrawToken(user, token, amount);
     }
 
