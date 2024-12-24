@@ -17,7 +17,8 @@ contract SubscriptionManager is Ownable {
 
     struct Subscription {
         uint256 expiry; // Timestamp of subscription expiry
-        Plan planId; // Subscription plan ID
+        Plan planId;
+        bool active; // Subscription plan ID
     }
 
     mapping(address => Subscription) public activeSubscriptions; // Tracks active subscriptions for each user
@@ -57,7 +58,7 @@ contract SubscriptionManager is Ownable {
     modifier isSubscribed(address user) {
         require(
             activeSubscriptions[user].expiry > block.timestamp,
-            "Err:sub-expired/inactive"
+            "Err:sub-expired"
         );
         _;
     }
@@ -78,6 +79,7 @@ contract SubscriptionManager is Ownable {
         }
 
         activeSubscriptions[msg.sender].expiry = newExpiry;
+        activeSubscriptions[msg.sender].active = true;
         emit Subscribed(msg.sender, _plan, newExpiry);
     }
 
@@ -92,6 +94,16 @@ contract SubscriptionManager is Ownable {
         require(msg.value == additionalCost, "Err:Upgrade-incorrect value");
 
         activeSubscriptions[msg.sender].planId = _newPlan;
+        uint256 newExpiry = activeSubscriptions[msg.sender].expiry +
+            subscriptionDuration;
+        require(
+            newExpiry > activeSubscriptions[msg.sender].expiry,
+            "Err:Expiry overflow"
+        );
+
+        activeSubscriptions[msg.sender].expiry = newExpiry;
+        activeSubscriptions[msg.sender].active = true;
+
         emit PlanUpgraded(
             msg.sender,
             currentPlan,
@@ -101,8 +113,7 @@ contract SubscriptionManager is Ownable {
     }
 
     function unsubscribe() external isSubscribed(msg.sender) {
-        delete activeSubscriptions[msg.sender].planId;
-        delete activeSubscriptions[msg.sender].expiry;
+        activeSubscriptions[msg.sender].active = false;
         emit Unsubscribed(msg.sender);
     }
 

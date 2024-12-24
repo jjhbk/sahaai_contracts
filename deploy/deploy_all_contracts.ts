@@ -62,7 +62,7 @@ const deployYourContract: DeployFunction = async function (hre: HardhatRuntimeEn
 
   const subRes = await deploy("SubscriptionManager", {
     from: deployer,
-    args: [parseUnits("0.001"), parseUnits("0.005"), parseUnits("0.008"), BigInt(2600000)],
+    args: [parseUnits("0.001"), parseUnits("0.005"), parseUnits("0.015"), BigInt(2600000)],
     log: true,
     // autoMine: can be passed to the deploy function to make the deployment process faster on local networks by
     // automatically mining the contract deployment transaction. There is no effect on live networks.
